@@ -8,6 +8,43 @@ import urllib.parse
 
 url = "https://ygocdb.com/api/v0/?search="
 
+card_dict = {
+    "红爹": "超魔导龙骑士-真红眼龙骑兵",
+    "凤爹": "命运英雄 毁灭凤凰人",
+    "虹爹": "虹光新宇侠",
+    "魔术爹": "娱乐伙伴 灵摆魔术家",
+    "白爹": "究极龙魔导师",
+    "人渣": "欧尼斯特",
+    "吃货": "教导的圣女 艾克莉西娅",
+    "轮胎龙": "嵌合要塞龙",
+    "飞天轮胎龙": "嵌合巨舰龙",
+    "海龟": "海龟坏兽 加美西耶勒",
+    "大宝贝": "熔岩魔神·岩浆魔像",
+    "蛋": "拉之翼神龙-球体形",
+    "蟑螂": "增殖的Z",
+    "师匠": "黑魔术师",
+    "高达": "神灭兵器－天霆号 扼宙斯",
+    "书呆": "阴沉书呆魔术师",
+    "陨石": "原始生命态 尼比鲁",
+    "星遗孀": "领取星杯的巫女",
+    "抗战": "铁兽的抗战",
+    "姬哥": "铁兽战线 姬特",
+    "鲜花": "鲜花之女男爵",
+    "牢爪": "邪心英雄 堕恶爪魔",
+    "问心无愧": "恐龙摔跤手·潘克拉辛角龙",
+    "陀螺": "疾行机人 贝陀螺集合体",
+    "除圣": "俱舍怒威族·阿莱斯哈特",
+    "红高达": "俱舍怒威族·阿莱斯哈特",
+    "博士": "秘旋谍-天才",
+    "小蓝": "龙女仆·清扫龙女",
+    "老艾": "被封印的艾克佐迪亚",
+    "斧王": "巨斧袭击者",
+    "奥特曼": "元素英雄 新宇侠",
+    "大炮": "魔炮战机 达磨羯磨",
+    "达磨炮": "魔炮战机 达磨羯磨",
+    "寝姬": "梦见之妮穆蕾莉娅",
+}
+
 @register("card", "Evoke", "一个简单的 游戏王查卡 插件", "1.0.0")
 class MyPlugin(Star):
     def __init__(self, context: Context):
@@ -25,7 +62,11 @@ class MyPlugin(Star):
         message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
         logger.info(message_chain)
 
-        msg_str = urllib.parse.quote(message_str[3:])
+        search_str = message_str[3:]
+        if search_str in card_dict:
+            search_str = card_dict[search_str]
+
+        msg_str = urllib.parse.quote(search_str)
 
         response = requests.get(url + msg_str)
 
