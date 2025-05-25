@@ -8,6 +8,8 @@ import urllib.parse
 
 url = "https://ygocdb.com/api/v0/?search="
 
+ALLOWED_GROUPS = { "776186904" }
+
 card_dict = {
     "红爹": "超魔导龙骑士-真红眼龙骑兵",
     "凤爹": "命运英雄 毁灭凤凰人",
@@ -43,6 +45,7 @@ card_dict = {
     "大炮": "魔炮战机 达磨羯磨",
     "达磨炮": "魔炮战机 达磨羯磨",
     "寝姬": "梦见之妮穆蕾莉娅",
+    "崇高力量": "神圣防护罩 -反射镜力-",
 }
 
 @register("card", "Evoke", "一个简单的 游戏王查卡 插件", "1.0.0")
@@ -55,9 +58,12 @@ class MyPlugin(Star):
     
     # 注册指令的装饰器。指令名为 helloworld。注册成功后，发送 `/helloworld` 就会触发这个指令，并回复 `你好, {user_name}!`
     @filter.command("查卡")
-    async def helloworld(self, event: AstrMessageEvent):
+    async def get_card(self, event: AstrMessageEvent):
+        if event.get_group_id() and event.get_group_id() not in ALLOWED_GROUPS:
+            yield event.plain_result("该群聊不可使用该功能")
+            return
+
         """这是一个 hello world 指令""" # 这是 handler 的描述，将会被解析方便用户了解插件内容。建议填写。
-        user_name = event.get_sender_name()
         message_str = event.message_str # 用户发的纯文本消息字符串
         message_chain = event.get_messages() # 用户所发的消息的消息链 # from astrbot.api.message_components import *
         logger.info(message_chain)
@@ -75,13 +81,37 @@ class MyPlugin(Star):
             if len(data) == 0:
                 yield event.plain_result("没有搜到这张卡捏~")
             elif len(data) > 1:
-                sc_names = [card.get("sc_name", "") if card.get("sc_name") else card.get("nwbbs_n", "") for card in data]
+                sc_names = []
+                for card in data:
+                    if card.get("sc_name", ""):
+                        sc_names.append(card.get("sc_name", ""))
+                    elif card.get("nwbbs_n", ""):
+                        sc_names.append(card.get("nwbbs_n", ""))
+                    if search_str == card.get("sc_name", "") or search_str == card.get("nwbbs_n", ""):
+                        card_pic = "https://cdn.233.momobako.com/ygopro/pics/" + str(card.get("id")) + ".jpg"
+                        sc_name = card.get("sc_name") if card.get("sc_name") else "无"
+                        nwbbs_n = card.get("nwbbs_n")
+                        jp_name = card.get("jp_name")
+                        en_name = card.get("en_name")
+                        types = card.get("text", {}).get("types")
+                        pdesc = card.get("text", {}).get("pdesc")
+                        if len(pdesc) == 0:
+                            pdesc = "无"
+                        desc = card.get("text", {}).get("desc")
+                        card_text = "简中卡名：" + sc_name + '\n' + "NWBBS卡名：" + nwbbs_n + '\n' + "日文卡名：" + jp_name + '\n' + "英文卡名：" + en_name + '\n\n' + "卡片信息：" + types + '\n' + "灵摆刻度：" + pdesc + '\n' + "卡片文本：" + desc
+                        chain = [
+                            # Comp.At(qq=event.get_sender_id()), # At 消息发送者
+                            Comp.Image.fromURL(card_pic), # 从 URL 发送图片
+                            Comp.Plain(card_text),
+                        ]
+                        yield event.chain_result(chain)
+                        return
                 joined_names = ', '.join(sc_names)
                 yield event.plain_result("这是搜到的所有卡片：" + joined_names)
             else:
                 card = data[0]
                 card_pic = "https://cdn.233.momobako.com/ygopro/pics/" + str(card.get("id")) + ".jpg"
-                sc_name = card.get("sc_name")
+                sc_name = card.get("sc_name") if card.get("sc_name") else "无"
                 nwbbs_n = card.get("nwbbs_n")
                 jp_name = card.get("jp_name")
                 en_name = card.get("en_name")
